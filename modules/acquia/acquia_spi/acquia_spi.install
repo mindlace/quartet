@@ -1,0 +1,57 @@
+<?php
+
+/**
+ * @file
+ *   Installer file for Acquia SPI module.
+ */
+
+// -- Core hooks ---------------------------------------------------------------
+/**
+ * Implementation of hook_requirements()
+ */
+function acquia_spi_requirements($phase) {
+  $requirements = array();
+  $subscription = variable_get('acquia_subscription_data', array('active' => FALSE));
+  if (!$subscription['active']) {
+    return array();
+  }
+  $t = get_t();
+  switch ($phase) {
+    case 'runtime' :
+      $href = isset($subscription['href']) ? $subscription['href'] .'/health' : 'http://acquia.com/network';
+      $t_strings = array('!network-link' => l(t('Acquia Network'), $href), '!refresh-status' => l(t('manually refresh the supported status'), 'admin/settings/acquia-agent/refresh-status', array('query' => drupal_get_destination())));
+      if (!isset($subscription['heartbeat_data']['supported'])) {
+        $requirements['acquia_supported'] = array(
+          'title' => $t('Acquia Network support status'),
+          'description' => t('The current status is unknown because cron has not run and checked for modified files in your Acquia Drupal installation. You can !refresh-status.', $t_strings), 
+          'severity' => REQUIREMENT_WARNING,
+          'value' => $t('Unknown'),
+        );
+      }
+      elseif (!$subscription['heartbeat_data']['supported']) {
+        $requirements['acquia_supported'] = array(
+        'title' => $t('Acquia Network support status'),
+          'description' => $t('Unsupported changes (modified or deleted files) were found in this Acquia Drupal installation. Modified or missing Acquia Drupal files may adversely affect your site\'s functionality and may limit Acquia\'s ability to assist you. Acquia is not obligated to diagnose and resolve issues stemming from unsupported modifications. Please restore the modified files to their original state and !refresh-status or contact Acquia Support if you have further questions. For more details, visit the !network-link.', $t_strings),
+          'severity' => REQUIREMENT_WARNING,
+          'value' => $t('Not supported'),
+        );
+      }
+      else {
+        $requirements['acquia_supported'] = array(
+          'title' => $t('Acquia Network support status'),
+          'description' => $t('You can also !refresh-status.', $t_strings),
+          'severity' => REQUIREMENT_OK,
+          'value' => $t('Supported'),
+        );
+      }
+  }
+  return $requirements;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function acquia_spi_uninstall() {
+  variable_del('acquia_spi_cron_last');
+  variable_del('acquia_spi_cron_interval');
+}

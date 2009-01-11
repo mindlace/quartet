@@ -1,0 +1,14 @@
+
+To install Mollom:
+
+ 1. Download the Mollom module from http://drupal.org or http://mollom.com
+ 2. Go to http://mollom.com
+ 3. Create a new user account if you haven't one already
+ 4. Login with your mollom.com account
+ 5. Go to the site manager to create a new key pair for your website
+ 6. Install the Mollom module on your site
+ 7. Go to the Mollom settings page and enter the key pair
+ 8. Configure the Mollom module
+
+For support go to http://mollom.com/support
+

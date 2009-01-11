@@ -1,0 +1,76 @@
+<?php
+// $Id: mollom.install,v 1.2.2.4 2008/10/16 11:10:52 dries Exp $
+
+/**
+ * @file
+ * Install and uninstall functions as well as schema definition for the Mollom module.
+ */
+
+/**
+ * Implementation of hook_schema().
+ */
+function mollom_schema() {
+  $schema['mollom'] = array(
+    'description' => t('Tracks content spam statuses.'),
+    'fields' => array(
+      'did' => array(
+        'description' => t('Unique ID of the content.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'session' => array(
+        'description' => t("Content author's session ID."),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'quality' => array(
+        'description' => t("A quality rating assigned to the content to tell whether or not it's spam."),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'languages' => array(
+          'description' => t("The language(s) that the content might be written in."),
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'default' => '',
+          ),
+      ),
+      'indexes' => array(
+     'session' => array('session'),
+    ),
+    'primary key' => array('did'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function mollom_install() {
+  drupal_install_schema('mollom');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function mollom_uninstall() {
+  db_query("DELETE FROM {variable} WHERE name LIKE 'mollom_%'");
+  drupal_uninstall_schema('mollom');
+}
+
+/**
+ * An update function to add the language field.
+ */
+function mollom_update_1() {
+  $ret = array();
+  db_add_field($ret, 'mollom', 'languages', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
+  return $ret;
+}

@@ -1,0 +1,8 @@
+#header #edit-name-wrapper { float: left; margin-top: 0; margin-right: .5em;}
+#header #edit-pass-wrapper { display: inline; }
+#header #edit-submit { display: inline; }
+#header .block .item-list ul { clear: both; margin: 0; padding: 0; }
+#header .block .item-list li { display: inline; margin: 0; padding-left: 0; }
+#header .block .item-list li.last { padding-left: 2.5em; }
+#block-custom-1 h2 { font-size: medium; }
+#block-custom-1 ul li { font-size: 80%; }

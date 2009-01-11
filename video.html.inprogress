@@ -1,0 +1,22 @@
+<html>
+<body>
+
+<table border="0" cellpadding="0" cellspacing="0">
+  
+<td><img src="qtopborder.png" alt="spacer" height="156" width="480" border="0"/> </td
+  <tr>
+    <td><object classid='clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B' width="480"
+        height="360" codebase='http://www.apple.com/qtactivex/qtplugin.cab'>
+        <param name='src' value="/beta1.mov" />
+        <param name='showlogo' value="false"/>
+	<param name='border' value="0"/>
+        <param name='autoplay' value="true" />
+        <param name='controller' value="false" />
+        <param name='loop' value="false" />
+        <embed src="/beta1.mov" width="480" height="360" autoplay="true" controller="false" showlogo="false" border="0" loop="false" pluginspage='http://www.apple.com/quicktime/download/'></embed>
+        </object></td>
+  </tr>
+</table>
+</body>
+</html>
+

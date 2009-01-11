@@ -1,0 +1,24 @@
+$(document).ready(function() {
+  $('#edit-field-melody-0-value-wrapper').hide();
+  $('#edit-submit').hide();
+  $('#edit-preview').hide();
+  var mypiano = new SWFObject("/sites/all/modules/quartet/piano.swf","apiano","400","400","9.0.0.0","#ffffff");
+  mypiano.addParam('play','true');
+  mypiano.addParam('allowScriptAccess','always');
+  mypiano.addParam('wmode','transparent');
+  mypiano.write('pkeys');
+  });
+  
+var already_playing = false
+function startPlaying() { 
+  $(document).ready( function() { 
+    if (!already_playing) {
+      document.getElementById('apiano').goHome();
+      already_playing = true;
+    } 
+  });
+}
+function jsFunc(melody) {
+  document.getElementById('edit-field-melody-0-value').value = melody
+  $('#node-form').submit();
+}

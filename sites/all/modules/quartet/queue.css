@@ -1,0 +1,12 @@
+#pending-melodies {
+  position: absolute;
+  background: transparent;
+  left: 0; top: 2em; right: 0; bottom: 0;
+  overflow: hidden;
+}
+#available-actions {
+  border: 1px solid black;
+}
+#queue-join-link {
+font-size:123%;
+}

@@ -1,0 +1,38 @@
+/* $Id: ie.css,v 1.4 2008/12/15 14:24:23 johnalbin Exp $ */
+
+/*
+ * CSS targeted specifically for Internet Explorer for Windows.
+ *
+ * Any CSS in this file will apply to all versions of IE. You can target
+ * specific versions of IE by using conditional comments. See your sub-theme's
+ * .info file for an easy way to use them.
+ *
+ * While building your theme, you should be aware of the work-around for the bug
+ * in IE that limits Drupal to 31 stylesheets total:
+ * http://drupal.org/node/256802
+ */
+
+/** Tabs **/
+
+  ul.primary li a,
+  ul.primary li a .tab,
+  ul.secondary li a,
+  ul.secondary li a .tab
+  {
+    cursor: pointer;
+  }
+
+/** Drupal nodes **/
+  .node-unpublished .node-inner>*
+  {
+    position: relative; /* Otherwise these elements will appear below the "Unpublished" text. */
+  }
+
+/** Drupal admin tables **/
+  .section-admin #content tr.even th,
+  .section-admin #content tr.even td,
+  .section-admin #content tr.odd th,
+  .section-admin #content tr.odd td
+  {
+    border-bottom: 1px solid #ccc; /* IE doesn't display borders on table rows */
+  }

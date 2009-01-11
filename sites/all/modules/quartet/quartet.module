@@ -1,0 +1,335 @@
+<?php
+// $Id$
+
+require_once 'quartet.inc';
+require_once drupal_get_path('module','node').'/node.pages.inc';
+
+/*
+* This implementation of hook_menu indicates which paths quartet is going to be responsible for.
+*/
+function quartet_menu() {
+  $items = array();
+  $items['quartet'] = array(
+    'title' => 'Quartet Interaction',
+    'page callback' => 'render_frameset',
+    'access callback' => true,
+    'type' => MENU_CALLBACK
+  );
+  $items['quartet/queue'] = array(
+    'title' => 'Upcoming Players Queue',
+    'page callback' => 'render_queue',
+    'access callback' => true,
+    'type' => MENU_CALLBACK
+  );
+  $items['quartet/queue/status'] = array(
+    'title' => 'Melody Status',
+    'page callback' => 'queue_status',
+    'access callback' => true,
+    'type' => MENU_CALLBACK
+  );
+  $items['quartet/playing'] = array(
+    'title' => 'display current melody',
+    'page callback' => 'melody_please',
+    'access callback' => true,
+    'type' => MENU_CALLBACK
+  );
+  $items['quartet/icanhassong'] = array(
+    'title' => 'get a new melody rolling',
+    'page callback' => 'icanhassong',
+    'access callback' => 'from_server',
+    'type' => MENU_CALLBACK
+  );
+  $items['quartet/queue/join'] = array(
+    'title' => "Join the player's queue",
+    'page callback' => 'join_queue',
+    'access callback' => 'has_pending_melody',
+    'access arguments' => array(false),
+  );
+  $items['quartet/practice'] = array(
+    'title' => 'Practice for your performance',
+    'page callback' => 'practice_performance',
+    'access callback' => 'has_pending_melody',
+    'access arguments' => array(true),
+  );
+  return $items;
+}
+
+
+/*
+* implementation of hook_theme.
+* Allows for unaltered output of html fragments
+* or pages as json.
+*/
+function quartet_theme($existing,$type,$theme,$path) {
+  // we're registering a few minimalist theme functions.
+  // they all take "content" as an argment.
+  $c = array('arguments' => array('content' => NULL));
+  $ct = $c;
+  // two of them take "title" as an argument.
+  $ct['arguments']['title'] = NULL;
+  // now we set up the array of theme registrations.
+  // the default behaviour is to call a function of the same
+  // name, prepended with theme_ (see below).
+  $r = array(
+    'utf8_string' => $c,
+    'printr' => $ct,
+    'bare_xhtml' => $ct,
+    );
+
+  // the bare_xhtml and 'frameset' theme will be provided by a template file rather
+  // than a theme function. I write the name here and the template
+  // engine automatically looks for a file with the name 'bare-xhtml.tpl.php'
+  // in our theme directory.    
+  $r['frameset'] = array(
+    'arguments' => array('title' => t('Quartet Interaction')),
+    'template' => 'frameset'
+  );
+  $r['bare_xhtml']['template'] = 'bare-xhtml';  
+  
+  return $r;
+}
+
+function render_frameset() {
+    $path = drupal_get_path('module','quartet');
+    return ' ';
+}
+
+/*
+* the following magic is brought to you by
+* http://11heavens.com/theming-Drupal-6-from-the-module-layer
+*/
+
+function quartet_preprocess_page(&$variables) {
+  if (arg(0) == 'quartet') {
+    if (arg(2)) {
+      if (arg(2) == 'status') {
+        $variables['template_file'] = 'bare-json';
+      }
+    } elseif (arg(1)) {
+      if (arg(1) == 'queue') {
+        $variables['template_file'] = 'bare-xhtml';
+      }
+      if (arg(1) == 'pending-melodies') {
+        $variables['template_file'] = 'bare-bare';
+      }
+    } else {
+      $variables['template_file'] = 'frameset';
+    }
+  }
+}
+
+function quartet_theme_registry_alter(&$theme_registry) {
+  $theme_hook = 'page';
+  $modulepath = drupal_get_path('module','quartet');
+  array_unshift($theme_registry[$theme_hook]['theme paths'], $modulepath);
+}
+
+/*
+* implementation of the 'utf8_string' theme function registered in quartet_theme()
+*/
+function theme_utf8_string($content) {
+  if ( drupal_validate_utf8($content) ) { return $content; }
+}
+
+/*
+* implementation of the 'bare_xhtml' theme is handled by
+* bare-xhtml.tpl.php
+*/ 
+
+function queue_status() {
+  global $user;
+  if ($user->uid == 0) { return; }
+  $return=array(1000,-10);
+  $r = views_get_view_result('pending_melodies',null);
+  for ($i = 0; $i < count($r); $i++) {
+    $melody = $r[$i];
+    if ($user->name == $melody->users_name) {
+      $return[0] = $i;
+      $return[1] = intval($melody->nid);
+      }
+  }
+  if ($return[0] == 0) {
+    if (variable_get('start_playing',null)) {
+      $return[0] = -1;
+    }
+  }
+  if ($return[0] < 1000) {
+    delete_stale_queue();
+  }
+  return $return;
+}
+
+function delete_stale_queue() {
+  global $user;
+  $user->roles[] = 'in queue';
+  user_access('delete any melody content',null,true);
+  $sql_q = <<<EOQ
+  SELECT node.nid AS nid,
+    node_data_field_melody.field_played_value AS node_data_field_melody_field_played_value,
+    node_data_field_melody.nid AS node_data_field_melody_nid,
+    node.type AS node_type,
+    node_data_field_melody.field_melody_value AS node_data_field_melody_field_melody_value,
+    users.uid AS users_uid,
+    node.created AS node_created FROM node 
+    LEFT JOIN content_type_melody node_data_field_melody 
+      ON node.vid = node_data_field_melody.vid
+    INNER JOIN users ON node.uid = users.uid 
+      WHERE (node_data_field_melody.field_melody_value IS NULL)
+        AND (node.type in ('melody'))
+        AND (users.uid NOT IN (SELECT uid from sessions) )
+    ORDER BY node_created DESC
+EOQ;
+  $r = db_query($sql_q);
+  while($melody = db_fetch_object($r)) {
+    node_delete($melody->nid);
+  }
+}
+
+function quartet_cron() {
+  delete_stale_queue();
+}
+
+
+function melody_please() {
+  $now = time();
+  $r = views_get_view_result('nowplaying',null);
+  
+  if (! count($r) ) {
+    $out = 'i=user&cmd=pleasehold';
+  } else {
+    $out = 'i=user&cmd=melody&events=10&'.$r[0]->node_data_field_melody_field_melody_value;
+  }
+  print theme('utf8_string', $out );
+  //print theme('utf8_string',print_r($melody,true));
+}
+
+function icanhassong() {
+  variable_set('start_playing',true);
+  print 'songsoonkthxbye';
+}
+
+/*
+
+        $old_melody = node_load($r[0]->nid);
+        $old_melody->field_played[0]['value'] = 1;
+        node_save($old_melody);
+*/
+
+function render_queue() {
+  $path = drupal_get_path('module','quartet');
+  drupal_add_css( $path.'/queue.css' );
+  drupal_add_js( $path.'/queue.js','module','header' );
+  drupal_add_js( $path.'/jquery.timers-1.0.0.js');
+  return '<div id="available-action"></div><div id="pending-melodies">Queue loading...</div>';
+}
+
+/*
+* Access control callback
+* should make sure this page is only called from the music-making device
+*/
+function from_server() {
+  if ($_SERVER['REMOTE_ADDR'] == '90.146.8.239') {
+    return true;
+    }
+}
+/*
+* Access control callback 
+*/
+function has_pending_melody($want) {
+  global $user;
+  if ($user->uid == 0) { return false; }
+  $r = views_get_view_result('user_in_queue',array($user->uid));
+  $in_q = count($r) > 0;
+  //drupal_set_message(print_r($r,true));
+  if ($want === $in_q) {
+    return true;
+  }
+  return false;
+}
+
+function practice_performance() {
+  global $user;
+  if ($user->uid == 0) {return false;}
+  $r = views_get_view_result('user_in_queue', array($user->uid));
+  drupal_goto('node/'.$r[0]->nid.'/edit');
+}
+
+function join_queue() {
+  global $user;
+  $anode = new stdClass();
+  $anode->type = 'melody';
+  node_object_prepare($anode);
+  $anode->uid = $user->uid;
+  $anode->title = $user->name . " " . time();
+  if ($user->uid==15) {
+    $user->roles[] = 'make sticky';
+     user_access('administer nodes',null,true);
+	$anode->sticky = 1;  
+  }
+  node_save($anode);
+ 
+  drupal_goto('node/'.$anode->nid.'/edit');
+}
+
+
+/* muck with the edit form for melodies 
+*
+*/
+function quartet_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == "melody_node_form") {
+    $n = $form['#node'];
+    # is this the "edit" form
+    if ($n->nid) {
+      $form['#pre_render'][] = 'make_piano';
+      $form['#redirect'] = 'thanks-for-the-melodies';
+    }
+  }
+}
+
+/*
+* hook_login implementation
+*/
+
+function quartet_user($op, &$edit, &$account) {
+  switch ($op) {
+    case 'logout':
+      $pending = views_get_view_result('pending_melodies',array($account->uid));
+      foreach ($pending as $melody) {
+        node_delete($melody->nid);
+      }
+      drupal_goto('/node');
+  }
+}
+
+/*
+* implement hook_nodeapi to set 'played' on current melody
+* when new melody is saved, or to turn off the "start_playing" flag.
+*/
+
+function quartet_nodeapi(&$node, $op) {
+  if ($node->type == 'melody') {
+    if ($op == 'update') {
+      $r = views_get_view_result('nowplaying',null);
+      if (count($r)  && $r[0]->nid != $node->nid) {
+        $old = node_load($r[0]->nid);
+        $old->field_played[0]['value'] = 1;
+        node_save($old);
+      }
+      variable_set('start_playing',false);
+    }
+  }
+}
+
+
+function make_piano($form) {
+  $path = drupal_get_path('module','quartet');
+  drupal_add_js( $path.'/jquery.timers-1.0.0.js');
+  drupal_add_js($path.'/swfobject/swfobject.js','module');
+  //drupal_set_message(dprint_r($form['field_melody'],TRUE));
+  drupal_add_js($path.'/loadpiano.js', 'module');
+  $form['field_melody']['#prefix'] = "<div id='pkeys'></div>";
+  //$form['field_melody']['#suffix'] = "<pre>".print_r($form,TRUE)."</pre>";
+  //drupal_set_message(dprint_r($form,true));
+  return $form;
+}
+

@@ -1,0 +1,12 @@
+; $Id: lightbox2.info,v 1.1.6.3 2008/04/12 14:21:41 snpower Exp $
+name = Lightbox2
+description = Enables Lightbox2 for Drupal
+package = Javascript tools
+core = 6.x
+
+; Information added by Acquia.com packaging script
+version = "6.x-1.8"
+core = "6.x"
+project = "lightbox2"
+acquia = "1"
+

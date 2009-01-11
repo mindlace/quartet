@@ -1,0 +1,12 @@
+name = Acquia site information
+description = "Sends a site profile including Acquia Drupal version, platform and module information; number of posts, comments and users; as well as file hashes and file metainformation on files in the system to the Acquia Network to facilitate support and update notifications."
+package = Acquia Network
+core = 6.x
+version = "1.1.1-ISR"
+dependencies[] = acquia_agent
+
+
+; Information added by Acquia.com packaging script
+version = "1.1.1-ISR"
+acquia = "1"
+

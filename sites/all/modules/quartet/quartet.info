@@ -1,0 +1,4 @@
+; $Id$
+name = Quartet Interaction
+description = Play music on a remote instrument.
+core = 6.x

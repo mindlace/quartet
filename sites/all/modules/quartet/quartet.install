@@ -1,0 +1,4 @@
+<?php 
+  function quartet_install() {
+  }
+?>

@@ -1,0 +1,176 @@
+/**
+ * $Id$
+ * Acquia Marina 
+ * icons for blocks 
+ */
+
+/*--- BLOG BLOCKS ---*/
+div.block-blog div.block-icon {
+  background: transparent url('icons/tnt_icon_01.png') no-repeat left center;
+}
+
+#block-blog-0 div.block-icon,
+body.layout-main-last #sidebar-last #block-blog-0 h2.block-title {
+  background: transparent url('icons/tnt_icon_02.png') no-repeat left center;
+}
+
+/*--- BOOK BLOCK ---*/
+#block-book-0 div.block-icon,
+body.layout-main-last #sidebar-last #block-book-0 h2.block-title {
+  background: transparent url('icons/tnt_icon_07.png') no-repeat left center;
+}
+
+/*--- COMMENTS & FORUMS BLOCKS ---*/
+div.block-comment div.block-icon,
+div.comments-block-icon,
+#block-views-comments_recent-block div.block-icon {
+  background: transparent url('icons/tnt_icon_01.png') no-repeat left center;
+}
+
+div.block-forum div.block-icon,
+body.layout-main-last #sidebar-last div.block-comment h2.block-title,
+body.layout-main-last #sidebar-last div.block-forum h2.block-title,
+body.layout-main-last #sidebar-last #block-views-comments_recent-block h2.block-title {
+  background: transparent url('icons/tnt_icon_06.png') no-repeat left center;
+}
+
+/*--- DEVEL BLOCK ---*/
+#block-menu-devel div.block-icon,
+body.layout-main-last #sidebar-last #block-menu-devel h2.block-title {
+  background: transparent url('icons/tnt_icon_12.png') no-repeat left center;
+}
+
+/*--- MENU BLOCK ---*/
+div.block-menu div.block-icon,
+body.layout-main-last #sidebar-last div.block-menu h2.block-title {
+  background: transparent url('icons/tnt_icon_13.png') no-repeat left center;
+}
+
+/*--- SEARCH BLOCK ---*/
+div.block-search div.block-icon,
+body.layout-main-last #sidebar-last div.block-search h2.block-title {
+  background: transparent url('icons/tnt_icon_15.png') no-repeat left center;
+}
+
+div.block-search h2.block-title {
+  padding-left: 3.125em;
+}
+
+/*--- USER BLOCK ---*/
+div.block-user div.block-icon,
+body.layout-main-last #sidebar-last div.block-user h2.block-title {
+  background: transparent url('icons/tnt_icon_08.png') no-repeat left center;
+}
+
+/*--- USER LOGIN BLOCK ---*/
+#block-user-0 div.block-icon,
+body.layout-main-last #sidebar-last #block-user-0 h2.block-title {
+  background: transparent url('icons/tnt_icon_14.png') no-repeat left center;
+}
+
+/*--- VIEWS DEFAULT BLOCKS ---*/
+#block-views-archive-block div.block-icon,
+body.layout-main-last #sidebar-last #block-views-archive-block h2.block-title {
+  background: transparent url('icons/tnt_icon_07.png') no-repeat left center;
+}
+
+/* group the block-icon layout styles together */
+div.block-blog div.block-icon,
+div.block-comment div.block-icon,
+div.block-forum div.block-icon,
+div.block-search div.block-icon,
+div.block-menu div.block-icon,
+div.comments-block-icon,
+div.block-user div.block-icon,
+#block-blog-0 div.block-icon,
+#block-book-0 div.block-icon,
+#block-menu-devel div.block-icon,
+#block-user-0 div.block-icon,
+#block-views-archive-block div.block-icon,
+#block-views-comments_recent-block div.block-icon {
+  height: 48px;
+  left: 0;
+  position: absolute;
+  top: -0.666em;
+  width: 48px;
+}
+
+/* remove block icons for preface blocks & layout-main-last #sidebar-last */
+#preface-wrapper div.block div.block-icon,
+body.layout-main-last #sidebar-last div.block div.block-icon,
+#footer div.block div.block-icon {
+  background: none;
+}
+
+/*----------- BLOCK-TITLE -------------*/
+/* targeting body.layout-main-last #sidebar-last block-title */
+
+/* BLOG BLOCKS*/
+body.layout-main-last #sidebar-last #block-blog-0 h2.block-title {
+  background-position: left -1px;
+}
+
+/* BOOK BLOCKS */
+body.layout-main-last #sidebar-last #block-book-0 h2.block-title {
+  background-position: left -1px;
+}
+
+/* COMMENTS BLOCKS */
+body.layout-main-last #sidebar-last div.block-comment h2.block-title {
+  background-position: left -1px;
+}
+
+/* DEVEL BLOCKS */
+body.layout-main-last #sidebar-last #block-menu-devel h2.block-title {
+  background-position: left -1px;
+}
+
+/* FORUM BLOCKS */
+body.layout-main-last #sidebar-last div.block-forum h2.block-title {
+  background-position: left -1px;
+}
+
+/* MENU BLOCKS */
+body.layout-main-last #sidebar-last div.block-menu h2.block-title {
+  background-position: left -1px;
+}
+
+/* SEARCH BLOCK */
+body.layout-main-last #sidebar-last div.block-search h2.block-title {
+  background-position: left -1px;
+  margin: 0 0 4px;
+}
+
+/* USER BLOCKS */
+body.layout-main-last #sidebar-last div.block-user h2.block-title {
+  background-position: left -1px;
+  padding: 14px 0 0 52px;
+}
+
+/* USER LOGIN BLOCK */
+body.layout-main-last #sidebar-last #block-user-0 h2.block-title {
+  background-position: left -1px;
+}
+
+/* VIEWS BLOCKS */
+body.layout-main-last #sidebar-last #block-views-archive-block h2.block-title {
+  background-position: left -1px;
+}
+
+body.layout-main-last #sidebar-last #block-views-comments_recent-block h2.block-title {
+  background-position: left -1px;
+}
+
+/* group the block-title padding styles together */
+body.layout-main-last #sidebar-last #block-blog-0 h2.block-title,
+body.layout-main-last #sidebar-last #block-book-0 h2.block-title,
+body.layout-main-last #sidebar-last div.block-comment h2.block-title,
+body.layout-main-last #sidebar-last div.block-forum h2.block-title,
+body.layout-main-last #sidebar-last div.block-menu h2.block-title,
+body.layout-main-last #sidebar-last #block-menu-devel h2.block-title,
+body.layout-main-last #sidebar-last div.block-search h2.block-title,
+body.layout-main-last #sidebar-last #block-user-0 h2.block-title,
+body.layout-main-last #sidebar-last #block-views-archive-block h2.block-title,
+body.layout-main-last #sidebar-last #block-views-comments_recent-block h2.block-title {
+  padding: 12px 0 0 52px;
+}

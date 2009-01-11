@@ -1,0 +1,21 @@
+/* $Id: webform.css,v 1.4.2.1 2008/06/30 00:19:36 quicksketch Exp $ */
+
+.webform-submission-navigation {
+  text-align: right;
+}
+.webform-submission-next {
+  margin-left: 20px;
+}
+.webform-checkbox {
+  text-align: center;
+  width: 40px;
+}
+.webform-default-value {
+  color: #999;
+}
+tr.webform-add-form .tabledrag-changed {
+  display: none;
+}
+#webform-components tr.webform-add-form {
+  background-color: inherit;
+}
