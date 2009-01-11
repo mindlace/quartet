@@ -4,6 +4,7 @@ $(document).ready(function() {
   $('#edit-preview').hide();
   $('#edit-delete').hide();
   $('#edit-field-played-value-wrapper').hide();
+  $('.tabs').hide();
   var mypiano = new SWFObject("/sites/all/modules/quartet/piano.swf","apiano","400","400","9.0.0.0","#ffffff");
   mypiano.addParam('play','true');
   mypiano.addParam('allowScriptAccess','always');

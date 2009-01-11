@@ -39,6 +39,12 @@ function quartet_menu() {
     'access callback' => 'from_server',
     'type' => MENU_CALLBACK
   );
+   $items['quartet/nomoresong'] = array(
+    'title' => 'un-request a new song',
+    'page callback' => 'nomoresong',
+    'access callback' => 'from_server',
+    'type' => MENU_CALLBACK
+  );
   $items['quartet/queue/join'] = array(
     'title' => "Join the player's queue",
     'page callback' => 'join_queue',
@@ -204,8 +210,22 @@ function melody_please() {
 }
 
 function icanhassong() {
+  $playing = variable_get('start_playing',false);
   variable_set('start_playing',true);
-  print 'songsoonkthxbye';
+  if ($playing) {
+    print 'I already thought you wanted a new song';
+  } else {
+    print 'I now think you want a new song';
+  }
+}
+function nomoresong() {
+  $playing = variable_get('start_playing',false);
+  variable_set('start_playing',false);
+  if ($playing) {
+    print 'I thought you wanted a new song';
+  } else {
+    print 'I thought you did not want a new song';
+  }
 }
 
 /*
@@ -215,10 +235,15 @@ function icanhassong() {
         node_save($old_melody);
 */
 
-function render_queue() {
+function render_queue($block=false) {
   $path = drupal_get_path('module','quartet');
-  drupal_add_css( $path.'/queue.css' );
-  drupal_add_js( $path.'/queue.js','module','header' );
+  if ($block) {
+    drupal_add_css( $path.'/queue-block.css' );
+    drupal_add_js( $path.'/queue-block.js','module','header' );
+  } else {
+    drupal_add_css( $path.'/queue.css' );
+    drupal_add_js( $path.'/queue.js','module','header' );
+  }
   drupal_add_js( $path.'/jquery.timers-1.0.0.js');
   return '<div id="available-action"></div><div id="pending-melodies">Queue loading...</div>';
 }
@@ -333,3 +358,24 @@ function make_piano($form) {
   return $form;
 }
 
+function quartet_block($op='list',$delta=0) {
+  if ($op == 'list') {
+    $block[0]['info'] = t('Quartet Video');
+    $block[1]['info'] = t('Quartet Queue');
+    return $block;
+  } else if ($op == 'view') {
+    if ($delta == 0) {
+      return video_block();
+    } else if ($delta == 1) {
+      return queue_block();
+    }
+  }
+}
+function video_block() {
+  $block['content'] = file_get_contents('video.html');
+  return $block;
+}
+function queue_block() {
+  $block['content']=render_queue(true);
+  return $block;
+}
