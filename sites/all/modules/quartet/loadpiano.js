@@ -1,33 +1,37 @@
-$(document).ready(function() {
-  $('#edit-field-melody-0-value-wrapper').hide();
-  $('#edit-submit').hide();
-  $('#edit-preview').hide();
-  $('#edit-delete').hide();
-  $('#edit-field-played-value-wrapper').hide();
-  $('.tabs').hide();
-  var mypiano = new SWFObject("/sites/all/modules/quartet/piano.swf","apiano","400","400","9.0.0.0","#ffffff");
-  mypiano.addParam('play','true');
-  mypiano.addParam('allowScriptAccess','always');
-  mypiano.addParam('wmode','transparent');
-  mypiano.write('pkeys');
-  $('#pkeys').ready( function() { $('#apiano').ready( function() { $('#apiano').focus(); }); } );
-  });
-  
-var already_playing = false
-function startPlaying() { 
-  $('#pkeys').ready( function() {
-    if (!already_playing) {
-      already_playing = true;
-      $('#apiano').ready( function() {
-        window.top.focus();
-        $('#apiano').focus(); 
-        document.getElementById('apiano').goHome();
-      }); 
-    
-    }
-  });
+var anid = 0;
+$(document).ready(function () {
+    $('#pkeys').ready( function() {
+      var mypiano = new SWFObject("/sites/all/modules/quartet/piano.swf","apiano","480","400","9.0.0.0","#ffffff");
+      mypiano.addParam('play','true');
+      mypiano.addParam('allowScriptAccess','always');
+      mypiano.addParam('wmode','transparent');
+      mypiano.write('pkeys');
+    });
+    $('#join-the-queue').click( function () {
+      $.getJSON('/quartet/queue/join', null, hideJoin);
+    });
+});
+
+function hideJoin(data, textStatus) {
+  anid = data;
+  $('#join-the-queue').slideUp(400);
 }
+  
+var already_playing = false;
+function startPlaying() { 
+  if (!already_playing) {
+    already_playing = true;
+    document.getElementById('apiano').goHome();
+    console.log('called goHome');
+    }
+}
+
 function jsFunc(melody) {
-  document.getElementById('edit-field-melody-0-value').value = melody
-  $('#node-form').submit();
+  here_is_your_melody(melody);
+}
+
+function here_is_your_melody(melody) {
+  //melody_nid comes from the code embedded by piano_block or loadPiano
+  editurl = '/quartet/'+ anid +'/'+ melody
+  $('#pkeys').prepend('<div></div>').load(editurl).fadeIn();
 }

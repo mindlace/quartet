@@ -50,12 +50,21 @@ function quartet_menu() {
     'page callback' => 'join_queue',
     'access callback' => 'has_pending_melody',
     'access arguments' => array(false),
+    'type' => MENU_CALLBACK
   );
   $items['quartet/practice'] = array(
     'title' => 'Practice for your performance',
     'page callback' => 'practice_performance',
     'access callback' => 'has_pending_melody',
     'access arguments' => array(true),
+  );
+  $items['quartet/%node/%'] = array(
+    'title' => 'Submit your melody',
+    'page callback' => 'accept_melody',
+    'page arguments' => array(1,2),
+    'access callback' => 'has_pending_melody',
+    'access arguments' => array(true),
+    'type' => MENU_CALLBACK
   );
   return $items;
 }
@@ -253,6 +262,8 @@ function render_queue($block=false) {
 * should make sure this page is only called from the music-making device
 */
 function from_server() {
+  global $user;
+  if ($user->uid == 1) { return true;}
   if ($_SERVER['REMOTE_ADDR'] == '90.146.8.239') {
     return true;
     }
@@ -293,9 +304,33 @@ function join_queue() {
   }
   node_save($anode);
  
-  drupal_goto('node/'.$anode->nid.'/edit');
+  print $anode->nid;
 }
 
+function accept_melody(&$node, $melody) {
+  $node->field_melody[0]['value'] = $melody;
+  node_save($melody);
+  print t('Your melody has been accepted and will be interpreted soon');
+}
+
+/*
+* implement hook_nodeapi to set 'played' on current melody
+* when new melody is saved, or to turn off the "start_playing" flag.
+*/
+
+function quartet_nodeapi(&$node, $op) {
+  if ($node->type == 'melody') {
+    if ($op == 'update') {
+      $r = views_get_view_result('nowplaying',null);
+      if (count($r)  && $r[0]->nid != $node->nid) {
+        $old = node_load($r[0]->nid);
+        $old->field_played[0]['value'] = 1;
+        node_save($old);
+      }
+      variable_set('start_playing',false);
+    }
+  }
+}
 
 /* muck with the edit form for melodies 
 *
@@ -326,24 +361,7 @@ function quartet_user($op, &$edit, &$account) {
   }
 }
 
-/*
-* implement hook_nodeapi to set 'played' on current melody
-* when new melody is saved, or to turn off the "start_playing" flag.
-*/
 
-function quartet_nodeapi(&$node, $op) {
-  if ($node->type == 'melody') {
-    if ($op == 'update') {
-      $r = views_get_view_result('nowplaying',null);
-      if (count($r)  && $r[0]->nid != $node->nid) {
-        $old = node_load($r[0]->nid);
-        $old->field_played[0]['value'] = 1;
-        node_save($old);
-      }
-      variable_set('start_playing',false);
-    }
-  }
-}
 
 
 function make_piano($form) {
@@ -353,7 +371,7 @@ function make_piano($form) {
   //drupal_set_message(dprint_r($form['field_melody'],TRUE));
   drupal_add_js($path.'/loadpiano.js', 'module');
   $form['field_melody']['#prefix'] = "<div id='pkeys'></div>";
-  //$form['field_melody']['#suffix'] = "<pre>".print_r($form,TRUE)."</pre>";
+  $form['field_melody']['#suffix'] = "<pre>".print_r($form,TRUE)."</pre>";
   //drupal_set_message(dprint_r($form,true));
   return $form;
 }
@@ -362,12 +380,16 @@ function quartet_block($op='list',$delta=0) {
   if ($op == 'list') {
     $block[0]['info'] = t('Quartet Video');
     $block[1]['info'] = t('Quartet Queue');
+    $block[2]['info'] = t('Quartet Piano');
     return $block;
   } else if ($op == 'view') {
-    if ($delta == 0) {
-      return video_block();
-    } else if ($delta == 1) {
-      return queue_block();
+    switch ($delta) {
+      case 0:
+        return video_block();
+      case 1:
+        return queue_block();
+      case 2:
+        return piano_block();
     }
   }
 }
@@ -377,5 +399,21 @@ function video_block() {
 }
 function queue_block() {
   $block['content']=render_queue(true);
+  return $block;
+}
+function piano_block() {
+  global $user;
+  if ($user->uid == 0) { return; }
+  $path = drupal_get_path('module','quartet');
+  drupal_add_js( $path.'/jquery.timers-1.0.0.js');
+  drupal_add_js($path.'/swfobject/swfobject.js','module');
+  drupal_add_js($path.'/loadpiano.js', 'module');
+  $r = views_get_view_result('user_in_queue', array($user->uid));
+  $c = '';
+  if (count($r) == 0) {
+    $c = '<a id="join-the-queue" href="#">' . t('Join the Queue') .'</a>';
+  }
+  $c .= '<div id="pkeys"></div>';
+  $block['content'] = $c;
   return $block;
 }

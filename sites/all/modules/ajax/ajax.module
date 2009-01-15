@@ -1,0 +1,351 @@
+<?php
+/**
+ * Automatic AJAX forms validation, preview, and submission
+ *
+ * @see http://drupal.org/project/ajax
+ * @see irc://freenode.net/#drupy
+ * @depends Drupal 6
+ * @author brendoncrawford
+ * @note This file uses a 79 character width limit.
+ * @note Available hooks are:
+ *   hook_ajax_validate_fail
+ *   hook_ajax_validate_cleanup
+ *   hook_ajax_types
+ *   hook_ajax_alter
+ *
+ */
+
+
+/**
+ * hook_init
+ *
+ * @return Bool
+ */
+function ajax_init() {
+  drupal_add_js(drupal_get_path('module', 'ajax') .
+    '/Ajax.js', 'module');
+  return TRUE;
+}
+
+
+/**
+ * hook_form_alter
+ *
+ * @param $form Assoc
+ * @param $form_state Assoc
+ * @param $form_id String
+ * @return Bool
+ */
+function ajax_form_alter(&$form, $form_state, $form_id) {
+  if (array_key_exists('#ajax', $form) && $form['#ajax']) {
+    $found = FALSE;
+    ajax_invoke('ajax_alter', $form, $form_id);
+    ajax_validator_set($form);
+    ajax_submitter_find($form, $found);
+    ajax_submitter_set($form, $found);
+  }
+  return TRUE;
+}
+
+/**
+ * Gets internal path from actual url path
+ *
+ * @param $val String
+ * @return String
+ */
+function ajax_drupal_path($val) {
+  $b = base_path();
+  $bs = sizeof($b);
+  if (substr($val, 0, $bs) === $b) {
+    return substr($val, $bs);
+  }
+  else {
+    return $val;
+  }
+}
+
+/**
+ * Collects path info
+ *
+ * @param $val String
+ * @return Assoc
+ */
+function ajax_path_info($val) {
+  $out = array(
+    'path' => NULL,
+    'query' => array(),
+    'fragment' => NULL
+  );
+  $u = parse_url($val);
+  if (array_key_exists('query', $u)) {
+    parse_str($u, $out['query']);
+  }
+  if (array_key_exists('path', $u)) {
+    $out['path'] = $u['path'];
+  }
+  if (array_key_exists('fragment', $u)) {
+    $out['fragment'] = $u['fragment'];
+  }
+  return $out;
+}
+
+/**
+ * Sets the validator
+ *
+ * @param $form Assoc
+ * @return Bool
+ */
+function ajax_validator_set(&$form) {
+  $form['#validate'][] = 'ajax_validator';
+  $form['#attributes']['class'] = 'ajax-form';
+  return TRUE;
+}
+
+/**
+ * Sets the submitter
+ *
+ * @param $form Assoc
+ * @param $found Bool
+ * @return Bool
+ */
+function ajax_submitter_set(&$form, $found) {
+  if (!$found) {
+    $form['#submit'][] = 'ajax_submitter';
+    $form['#attributes']['class'] = 'ajax-form';
+  }
+  return TRUE;
+}
+
+/**
+ * Finds the submitter
+ *
+ * @param $form Assoc
+ * @param $found Bool
+ * @return Bool
+ */
+function ajax_submitter_find(&$form, &$found) {
+  foreach ($form as $form_key => $form_val) {
+    if (is_array($form[$form_key])) {
+      //submit or preview button
+      if (
+          (array_key_exists('#type', $form[$form_key]) &&
+          ($form[$form_key]['#type'] === 'submit' ||
+          $form[$form_key]['#type'] === 'button')) &&
+          ($form_key === 'submit' || $form_key === 'preview')) {
+        $form[$form_key]['#attributes']['class'] = 'ajax-trigger';
+        if (array_key_exists('#submit', $form[$form_key]) &&
+            !empty($form[$form_key]['#submit'])) {
+          $form[$form_key]['#submit'][] = 'ajax_submitter';
+          $found = TRUE;
+        }
+      }
+      //nested
+      else {
+        ajax_submitter_find($form[$form_key], $found);
+      }
+    }
+  }
+  return TRUE;
+}
+
+/**
+ * Gets redirect
+ * Sometimes the redirect can be an array in the form of
+ *   0 => path
+ *   1 => query
+ *   2 => fragment
+ *
+ * @param $redirect String|Array
+ * @return String
+ */
+function ajax_get_redirect($redirect) {
+  //watchdog('AJAX Forms', 'Redirect: !redirect',
+  //  array('!redirect'=>gettype($redirect[1])));
+  $args = array();
+  $args['absolute'] = TRUE;
+  if (is_array($redirect)) {
+    if ($redirect[1] !== NULL) {
+      $args['query'] = $redirect[1];
+    }
+    if ($redirect[2] !== NULL) {
+      $args['fragment'] = $redirect[2];
+    }
+    $path = $redirect[0];
+  }
+  else {
+    $path = $redirect;
+  }
+  return url($path, $args);
+}
+
+/**
+ * Submission handler callback
+ *
+ * @param $form Assoc
+ * @param $form_state Assoc
+ * @return Bool
+ */
+function ajax_submitter(&$form, &$form_state) {
+  $data = array();
+  // Node Preview
+  if (array_key_exists('node_preview', $form_state) &&
+      $form_state['node_preview'] !== NULL) {
+    $data['preview'] = $form_state['node_preview'];
+  }
+  // Go to redirection page
+  if (array_key_exists('redirect', $form_state) &&
+      $form_state['redirect'] !== NULL) {
+    $data['redirect'] = $form_state['redirect'];
+  }
+  // Display messages internally without redirect
+  else {
+    $messages = drupal_get_messages(NULL, TRUE);
+    if (array_key_exists('status', $messages)) {
+      $data['messages_status'] = $messages['status'];
+    }
+    if (array_key_exists('warning', $messages)) {
+      $data['messages_warning'] = $messages['warning'];
+    }
+  }
+  $out = ajax_build($data);
+  ajax_out($out);
+  return TRUE;
+}
+
+/**
+ * Invokes hooks
+ *
+ * @param unknown_type $view_name
+ * @param unknown_type $display_id
+ * @param unknown_type $out
+ * @return unknown
+ */
+function ajax_invoke($hook, &$p1=NULL, &$p2=NULL, &$p3=NULL, &$p4=NULL) {
+  foreach (module_implements($hook) as $name) {
+    $function = $name . '_' . $hook;
+    $result = $function($p1, $p2, $p3, $p4);
+  }
+  return TRUE;
+}
+
+/**
+ * Validation handler callback
+ *
+ * @param $form Assoc
+ * @param $form_state Assoc
+ * @return Bool
+ */
+function ajax_validator(&$form, &$form_state) {
+  if (array_key_exists('ajax', $_REQUEST)) {
+    drupal_get_messages(NULL, TRUE);
+    $data = ajax_build(array(
+      'messages_error' => form_get_errors()
+    ));
+    // FAIL
+    if (!$data['status']) {
+      ajax_invoke('ajax_validate_fail', $form, $form_state, $data);
+      ajax_out($data);
+    }
+    // PASS
+    else {
+      $pass = TRUE;
+      ajax_invoke('ajax_validate_pass', $form, $form_state, $data, $pass);
+      if (!$pass) {
+        ajax_out($data);
+      }
+    }
+  }
+  return TRUE;
+}
+
+/**
+ * Outputs data
+ *
+ * @param $data String
+ * @return Exit
+ */
+function ajax_out($data) {
+  ob_clean();
+  header('HTTP/1.1 200 OK', TRUE);
+  drupal_json($data);
+  exit;
+}
+
+/**
+ * Gets a clean element id
+ * taken from form_clean_id
+ *
+ * @param $field_id String
+ * @return String
+ */
+function ajax_clean_id($field_id) {
+  return str_replace(array('][', '_', ' '), '-', $field_id);
+}
+
+/**
+ * Builds the output object
+ *
+ * @param $data Assoc
+ * @return Assoc
+ */
+function ajax_build($data) {
+  $out = array(
+    'status' => true,
+    'updaters' => array(),
+    'debug' => array(),
+    'messages_error' => array(),
+    'messages_status' => array(),
+    'messages_warning' => array(),
+    'redirect' => NULL,
+    'preview' => NULL
+  );
+  // MESSAGE:ERROR
+  if (array_key_exists('messages_error', $data) &&
+      $data['messages_error'] !== NULL) {
+    $out['status'] = FALSE;
+    foreach ($data['messages_error'] as $k => $v) {
+      $out['messages_error'][] = array(
+        'id' => ajax_clean_id("edit-" . $k),
+        'value' => $v
+      );
+    }
+  }
+  // MESSAGE:STATUS
+  if (array_key_exists('messages_status', $data) &&
+      $data['messages_status'] !== NULL) {
+    foreach ($data['messages_status'] as $k => $v) {
+      $out['messages_status'][] = array(
+        'id' => (int)$k,
+        'value' => $v
+      );
+    }
+  }
+  // MESSAGE:WARNING
+  if (array_key_exists('messages_warning', $data) &&
+      $data['messages_warning'] !== null) {
+    foreach ($data['messages_warning'] as $k => $v) {
+      $out['messages_warning'][] = array(
+        'id' => (int)$k,
+        'value' => $v
+      );
+    }
+  }
+  // Redirect: Destination Parameter
+  if (array_key_exists('destination', $_GET)) {
+    $out['redirect'] = ajax_get_redirect($_GET['destination']);
+  }
+  // Redirect: Explicit
+  elseif (array_key_exists('redirect', $data) && $data['redirect'] !== NULL) {
+    $out['redirect'] = ajax_get_redirect($data['redirect']);
+  }
+  // Preview
+  if (array_key_exists('preview', $data) && $data['preview'] !== NULL) {
+    $out['preview'] = rawurlencode($data['preview']);
+  }
+  // Debug
+  if (array_key_exists('debug', $data) && $data['debug'] !== NULL) {
+    $out['debug'] = $data['debug'];
+  }
+  return $out;
+}
+

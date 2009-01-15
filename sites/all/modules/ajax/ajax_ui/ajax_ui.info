@@ -1,0 +1,13 @@
+name = Ajax forms ui
+description = User Interface for Ajax forms. You will not be able to manage Ajax forms without this module. 
+package = Ajax forms
+dependencies[] = ajax
+core = 6.x
+
+
+; Information added by drupal.org packaging script on 2009-01-12
+version = "6.x-1.9"
+core = "6.x"
+project = "ajax"
+datestamp = "1231800002"
+

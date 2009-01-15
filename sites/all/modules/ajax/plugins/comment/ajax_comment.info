@@ -1,0 +1,14 @@
+name = Ajax plugin - comment
+description = Enables ajax functionality for comment forms
+package = Ajax forms
+dependencies[] = ajax
+dependencies[] = comment
+core = 6.x
+
+
+; Information added by drupal.org packaging script on 2009-01-12
+version = "6.x-1.9"
+core = "6.x"
+project = "ajax"
+datestamp = "1231800002"
+
