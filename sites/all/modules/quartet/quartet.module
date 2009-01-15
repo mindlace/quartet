@@ -289,6 +289,14 @@ function practice_performance() {
   drupal_goto('node/'.$r[0]->nid.'/edit');
 }
 
+function isPrivateIP ( $ip ) {
+  $long = ip2long($ip);
+  if (($long >= 167772160 AND $long <= 184549375) OR ($long >= -1408237568 AND $long <= -1407188993) OR ($long >= -1062731776 AND $long <= -1062666241) OR ($long >= 2130706432 AND $long <= 2147483647)) {
+  return true;
+  }
+  return false;
+}
+
 function join_queue() {
   global $user;
   $anode = new stdClass();
@@ -296,10 +304,10 @@ function join_queue() {
   node_object_prepare($anode);
   $anode->uid = $user->uid;
   $anode->title = $user->name . " " . time();
-  if ($user->uid==15) {
+  if (isPrivateIP($_SERVER['REMOTE_ADDR'])) {
     $user->roles[] = 'make sticky';
-     user_access('administer nodes',null,true);
-	$anode->sticky = 1;  
+    user_access('administer nodes',null,true);
+    $anode->sticky = 1;  
   }
   node_save($anode);
  
