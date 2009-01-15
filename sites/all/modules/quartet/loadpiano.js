@@ -33,5 +33,5 @@ function jsFunc(melody) {
 function here_is_your_melody(melody) {
   //melody_nid comes from the code embedded by piano_block or loadPiano
   editurl = '/quartet/'+ anid +'/'+ melody
-  $('#pkeys').prepend('<div></div>').load(editurl).fadeIn();
+  $('#happy-fun-message').hide().load(editurl).fadeIn();
 }

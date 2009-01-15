@@ -238,7 +238,6 @@ function nomoresong() {
 }
 
 /*
-
         $old_melody = node_load($r[0]->nid);
         $old_melody->field_played[0]['value'] = 1;
         node_save($old_melody);
@@ -308,11 +307,11 @@ function join_queue() {
 }
 
 function accept_melody(&$node, $melody) {
-  $node->field_melody[0]['value'] = $melody;
-  node_save($melody);
+  $node->field_melody[0]['value'] = str_replace(' ','+',$melody);
+  node_save($node);
   print t('Your melody has been accepted and will be interpreted soon');
 }
-
+ 
 /*
 * implement hook_nodeapi to set 'played' on current melody
 * when new melody is saved, or to turn off the "start_playing" flag.
@@ -413,7 +412,7 @@ function piano_block() {
   if (count($r) == 0) {
     $c = '<a id="join-the-queue" href="#">' . t('Join the Queue') .'</a>';
   }
-  $c .= '<div id="pkeys"></div>';
+  $c .= '<div id="happy-fun-message"></div><div id="pkeys"></div>';
   $block['content'] = $c;
   return $block;
 }
